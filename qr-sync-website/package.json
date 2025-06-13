@@ -1,0 +1,14 @@
+{
+  "name": "qr-sync-website",
+  "version": "1.0.0",
+  "description": "A website for real-time communication between a sender and receiver using QR codes.",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "live-server src"
+  },
+  "dependencies": {
+    "websocket": "^1.0.34"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
