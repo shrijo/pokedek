@@ -2,27 +2,22 @@
 
 const qrCodeContainer = document.getElementById('qr-code');
 const messageDisplay = document.getElementById('message-display');
-const websocket = new WebSocket('ws://your-websocket-url');
+const receivedText = document.getElementById('received-text');
+const ws = new WebSocket(`ws://${window.location.hostname}:3000`);
 
-// Generate QR code
-function generateQRCode(url) {
-    const qrCode = new QRCode(qrCodeContainer, {
-        text: url,
-        width: 128,
-        height: 128,
-    });
-}
+// Generate QR code with the sender page URL
+const senderURL = `http://${window.location.hostname}:3000/sender.html`;
+QRCode.toCanvas(document.getElementById('qrcode'), senderURL, function (error) {
+    if (error) console.error(error);
+});
 
 // Listen for messages from the sender
-websocket.onmessage = function(event) {
-    const message = event.data;
-    messageDisplay.innerText = message;
+ws.onmessage = (event) => {
+    receivedText.textContent = event.data;
 };
 
 // Initialize the receiver
 function initReceiver() {
-    const senderUrl = 'http://your-sender-page-url'; // Replace with your sender page URL
-    generateQRCode(senderUrl);
 }
 
 window.onload = initReceiver;
