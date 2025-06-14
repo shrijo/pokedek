@@ -88,8 +88,6 @@ export default function Receiver() {
     <div
       style={{
         display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
         height: "100vh",
         width: "100vw",
       }}
@@ -98,6 +96,9 @@ export default function Receiver() {
         style={{
           flexGrow: sidebarVisible ? 0 : 1,
           width: sidebarVisible ? "70%" : "100%",
+          justifyContent: "center",
+          alignItems: "center",
+          display: "flex",
         }}
       >
         <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
