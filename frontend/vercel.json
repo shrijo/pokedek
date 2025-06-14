@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/sender/:path*", "destination": "/" },
+    { "source": "/receiver/:path*", "destination": "/" }
+  ]
+}
