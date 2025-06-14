@@ -22,21 +22,19 @@ export default function ReceiverPage() {
     const newUser: User = {
       id,
       color,
-      position: { x: 100, y: 100 },
+      position: { x: 100 + users.length * 60, y: 100 },
     };
 
     setUsers((prev) => [...prev, newUser]);
 
-    // Emit to server so it registers the user
     socket?.emit("add-user", { id, color });
   };
 
-  // Draw all users
+  // Draw users
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -46,18 +44,15 @@ export default function ReceiverPage() {
     });
   }, [users]);
 
-  // Connect to socket server
+  // Setup socket
   useEffect(() => {
     const s = io(import.meta.env.VITE_SERVER_URL);
     setSocket(s);
 
-    // Handle movement
-    s.on("move", (data: { id: string; x: number; y: number }) => {
+    s.on("move", ({ id, x, y }) => {
       setUsers((prev) =>
         prev.map((user) =>
-          user.id === data.id
-            ? { ...user, position: { x: data.x, y: data.y } }
-            : user
+          user.id === id ? { ...user, position: { x, y } } : user
         )
       );
     });
@@ -67,9 +62,9 @@ export default function ReceiverPage() {
     };
   }, []);
 
-  // Add first user on load
+  // Add first user on mount (after socket is ready)
   useEffect(() => {
-    if (users.length === 0 && socket) {
+    if (socket && users.length === 0) {
       addNewUser();
     }
   }, [socket]);
@@ -83,7 +78,14 @@ export default function ReceiverPage() {
         height={400}
         style={{ border: "1px solid #ccc" }}
       />
-      <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "2rem",
+          marginTop: "1rem",
+          flexWrap: "wrap",
+        }}
+      >
         {users.map((user) => (
           <div key={user.id}>
             <p style={{ color: user.color }}>{user.color} player</p>
