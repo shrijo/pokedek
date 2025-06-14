@@ -16,21 +16,18 @@ export default function Sender() {
     return <div>Error: Missing userId in URL</div>;
   }
 
-  // Function to send a move command to the server
   function sendMove(dx: number, dy: number) {
     socket.emit("move", { userId, dx, dy });
   }
 
-  // Start continuous movement in given direction
   function startMoving(dx: number, dy: number) {
-    if (intervalRef.current) return; // prevent multiple intervals
-    sendMove(dx, dy); // initial move immediately
+    if (intervalRef.current) return;
+    sendMove(dx, dy);
     intervalRef.current = setInterval(() => {
       sendMove(dx, dy);
     }, MOVE_INTERVAL);
   }
 
-  // Stop movement
   function stopMoving() {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -38,7 +35,6 @@ export default function Sender() {
     }
   }
 
-  // Handlers for mouse and touch events
   const handlers = {
     onMouseDown: (dx: number, dy: number) => () => startMoving(dx, dy),
     onMouseUp: stopMoving,
@@ -60,6 +56,10 @@ export default function Sender() {
         maxWidth: 300,
         margin: "auto",
         textAlign: "center",
+        userSelect: "none", // Disable text selection globally here
+        WebkitUserSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
       }}
     >
       <h1>Sender</h1>
@@ -68,14 +68,28 @@ export default function Sender() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 80px)",
-          gap: 10,
+          gridTemplateColumns: "repeat(3, 100px)", // bigger buttons
+          gap: 15,
           justifyContent: "center",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
         }}
       >
         <div />
         <button
-          style={{ padding: 20 }}
+          style={{
+            padding: 40,
+            fontSize: 32,
+            borderRadius: 12,
+            cursor: "pointer",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            touchAction: "manipulation",
+          }}
           {...handlers.onMouseDown(0, -MOVE_DELTA)}
           onMouseUp={handlers.onMouseUp}
           onMouseLeave={handlers.onMouseLeave}
@@ -87,7 +101,17 @@ export default function Sender() {
         <div />
 
         <button
-          style={{ padding: 20 }}
+          style={{
+            padding: 40,
+            fontSize: 32,
+            borderRadius: 12,
+            cursor: "pointer",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            touchAction: "manipulation",
+          }}
           {...handlers.onMouseDown(-MOVE_DELTA, 0)}
           onMouseUp={handlers.onMouseUp}
           onMouseLeave={handlers.onMouseLeave}
@@ -98,7 +122,17 @@ export default function Sender() {
         </button>
         <div />
         <button
-          style={{ padding: 20 }}
+          style={{
+            padding: 40,
+            fontSize: 32,
+            borderRadius: 12,
+            cursor: "pointer",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            touchAction: "manipulation",
+          }}
           {...handlers.onMouseDown(MOVE_DELTA, 0)}
           onMouseUp={handlers.onMouseUp}
           onMouseLeave={handlers.onMouseLeave}
@@ -110,7 +144,17 @@ export default function Sender() {
 
         <div />
         <button
-          style={{ padding: 20 }}
+          style={{
+            padding: 40,
+            fontSize: 32,
+            borderRadius: 12,
+            cursor: "pointer",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            touchAction: "manipulation",
+          }}
           {...handlers.onMouseDown(0, MOVE_DELTA)}
           onMouseUp={handlers.onMouseUp}
           onMouseLeave={handlers.onMouseLeave}
