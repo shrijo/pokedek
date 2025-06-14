@@ -1,104 +1,98 @@
-import React, { useEffect, useRef, useState } from "react";
-import { QRCodeCanvas } from "qrcode.react";
+// frontend/src/pages/Receiver.tsx
+import React, { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
+import QRCode from "qrcode.react";
 import { v4 as uuidv4 } from "uuid";
 
-type User = {
+interface User {
   id: string;
+  x: number;
+  y: number;
   color: string;
-  position: { x: number; y: number };
-};
+}
 
-const colors = ["red", "blue", "green", "orange", "purple"];
+const socket: Socket = io(import.meta.env.VITE_SERVER_URL);
 
-export default function ReceiverPage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export default function Receiver() {
   const [users, setUsers] = useState<User[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
 
-  const addNewUser = () => {
-    const id = uuidv4();
-    const color = colors[users.length % colors.length];
-    const newUser: User = {
-      id,
-      color,
-      position: { x: 100 + users.length * 60, y: 100 },
-    };
+  const colors = ["red", "green", "blue", "orange", "purple"];
 
-    setUsers((prev) => [...prev, newUser]);
-
-    socket?.emit("add-user", { id, color });
-  };
-
-  // Draw users
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    // Add first user once on mount
+    const firstUserId = uuidv4();
+    setUsers([{ id: firstUserId, x: 50, y: 50, color: colors[0] }]);
+  }, []);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    users.forEach((user) => {
-      ctx.fillStyle = user.color;
-      ctx.fillRect(user.position.x, user.position.y, 50, 50);
-    });
-  }, [users]);
-
-  // Setup socket
   useEffect(() => {
-    const s = io(import.meta.env.VITE_SERVER_URL);
-    setSocket(s);
-
-    s.on("move", ({ id, x, y }) => {
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === id ? { ...user, position: { x, y } } : user
-        )
+    socket.on("move", ({ userId, x, y }) => {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => (user.id === userId ? { ...user, x, y } : user))
       );
     });
 
     return () => {
-      s.disconnect();
+      socket.off("move");
     };
   }, []);
 
-  // Add first user on mount (after socket is ready)
-  useEffect(() => {
-    if (socket && users.length === 0) {
-      addNewUser();
-    }
-  }, [socket]);
+  function addUser() {
+    setUsers((prevUsers) => {
+      const newUserId = uuidv4();
+      return [
+        ...prevUsers,
+        {
+          id: newUserId,
+          x: 50,
+          y: 50,
+          color: colors[prevUsers.length % colors.length],
+        },
+      ];
+    });
+  }
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <h1>Receiver Page</h1>
-      <canvas
-        ref={canvasRef}
-        width={600}
-        height={400}
-        style={{ border: "1px solid #ccc" }}
-      />
+    <div style={{ padding: 20 }}>
+      <h1>Receiver</h1>
+      <button onClick={addUser}>Add User</button>
       <div
         style={{
-          display: "flex",
-          gap: "2rem",
-          marginTop: "1rem",
-          flexWrap: "wrap",
+          position: "relative",
+          width: 400,
+          height: 400,
+          border: "1px solid black",
+          marginTop: 20,
         }}
       >
         {users.map((user) => (
-          <div key={user.id}>
-            <p style={{ color: user.color }}>{user.color} player</p>
-            <QRCodeCanvas
+          <div
+            key={user.id}
+            style={{
+              position: "absolute",
+              width: 40,
+              height: 40,
+              backgroundColor: user.color,
+              left: user.x,
+              top: user.y,
+              transition: "left 0.1s, top 0.1s",
+            }}
+          />
+        ))}
+      </div>
+
+      <h2>QR Codes for Users</h2>
+      <div style={{ display: "flex", gap: 20 }}>
+        {users.map((user) => (
+          <div key={user.id} style={{ textAlign: "center" }}>
+            <QRCode
               value={`${window.location.origin}/sender/${user.id}`}
               size={128}
+              includeMargin
             />
+            <div>User: {user.id.substring(0, 6)}</div>
           </div>
         ))}
       </div>
-      <button onClick={addNewUser} style={{ marginTop: "1rem" }}>
-        ➕ Add user
-      </button>
     </div>
   );
 }
