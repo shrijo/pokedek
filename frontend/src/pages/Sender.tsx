@@ -1,169 +1,98 @@
 // src/pages/Sender.tsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 
 const socket: Socket = io(import.meta.env.VITE_SERVER_URL);
 
-const MOVE_DELTA = 5; // pixels per step
-const MOVE_INTERVAL = 100; // ms between moves while holding
-
 export default function Sender() {
   const { userId } = useParams<{ userId: string }>();
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [intervals, setIntervals] = useState<{
+    [key: string]: NodeJS.Timeout | null;
+  }>({});
 
-  if (!userId) {
-    return <div>Error: Missing userId in URL</div>;
-  }
+  const move = (dx: number, dy: number) => {
+    if (userId) socket.emit("move", { userId, dx, dy });
+  };
 
-  function sendMove(dx: number, dy: number) {
-    socket.emit("move", { userId, dx, dy });
-  }
+  const startMoving = (direction: string) => {
+    const [dx, dy] =
+      direction === "up"
+        ? [0, -5]
+        : direction === "down"
+        ? [0, 5]
+        : direction === "left"
+        ? [-5, 0]
+        : [5, 0];
 
-  function startMoving(dx: number, dy: number) {
-    if (intervalRef.current) return;
-    sendMove(dx, dy);
-    intervalRef.current = setInterval(() => {
-      sendMove(dx, dy);
-    }, MOVE_INTERVAL);
-  }
+    move(dx, dy);
+    const id = setInterval(() => move(dx, dy), 100);
+    setIntervals((prev) => ({ ...prev, [direction]: id }));
+  };
 
-  function stopMoving() {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }
+  const stopMoving = (direction: string) => {
+    const id = intervals[direction];
+    if (id) clearInterval(id);
+    setIntervals((prev) => ({ ...prev, [direction]: null }));
+  };
 
-  const handlers = {
-    onMouseDown: (dx: number, dy: number) => () => startMoving(dx, dy),
-    onMouseUp: stopMoving,
-    onMouseLeave: stopMoving,
-    onTouchStart: (dx: number, dy: number) => (e: React.TouchEvent) => {
-      e.preventDefault();
-      startMoving(dx, dy);
-    },
-    onTouchEnd: (e: React.TouchEvent) => {
-      e.preventDefault();
-      stopMoving();
-    },
+  const buttonStyle: React.CSSProperties = {
+    backgroundColor: "#2a2a2a",
+    color: "#fff",
+    border: "1px solid #444",
+    borderRadius: 6,
+    padding: 12,
+    width: 80,
+    height: 80,
+    margin: 8,
+    fontSize: 12,
+    touchAction: "none",
   };
 
   return (
     <div
       style={{
-        padding: 20,
-        maxWidth: 300,
-        margin: "auto",
-        textAlign: "center",
-        userSelect: "none", // Disable text selection globally here
-        WebkitUserSelect: "none",
-        MozUserSelect: "none",
-        msUserSelect: "none",
+        backgroundColor: "#121212",
+        color: "#fff",
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
       }}
     >
-      <h1>Sender</h1>
-      <p>User ID: {userId.substring(0, 6)}</p>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 100px)", // bigger buttons
-          gap: 15,
-          justifyContent: "center",
-          userSelect: "none",
-          WebkitUserSelect: "none",
-          MozUserSelect: "none",
-          msUserSelect: "none",
-        }}
-      >
-        <div />
+      <div>
         <button
-          style={{
-            padding: 40,
-            fontSize: 32,
-            borderRadius: 12,
-            cursor: "pointer",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-            MozUserSelect: "none",
-            msUserSelect: "none",
-            touchAction: "manipulation",
-          }}
-          {...handlers.onMouseDown(0, -MOVE_DELTA)}
-          onMouseUp={handlers.onMouseUp}
-          onMouseLeave={handlers.onMouseLeave}
-          onTouchStart={handlers.onTouchStart(0, -MOVE_DELTA)}
-          onTouchEnd={handlers.onTouchEnd}
+          style={buttonStyle}
+          onTouchStart={() => startMoving("up")}
+          onTouchEnd={() => stopMoving("up")}
         >
           ↑
         </button>
-        <div />
-
+      </div>
+      <div>
         <button
-          style={{
-            padding: 40,
-            fontSize: 32,
-            borderRadius: 12,
-            cursor: "pointer",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-            MozUserSelect: "none",
-            msUserSelect: "none",
-            touchAction: "manipulation",
-          }}
-          {...handlers.onMouseDown(-MOVE_DELTA, 0)}
-          onMouseUp={handlers.onMouseUp}
-          onMouseLeave={handlers.onMouseLeave}
-          onTouchStart={handlers.onTouchStart(-MOVE_DELTA, 0)}
-          onTouchEnd={handlers.onTouchEnd}
+          style={buttonStyle}
+          onTouchStart={() => startMoving("left")}
+          onTouchEnd={() => stopMoving("left")}
         >
           ←
         </button>
-        <div />
         <button
-          style={{
-            padding: 40,
-            fontSize: 32,
-            borderRadius: 12,
-            cursor: "pointer",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-            MozUserSelect: "none",
-            msUserSelect: "none",
-            touchAction: "manipulation",
-          }}
-          {...handlers.onMouseDown(MOVE_DELTA, 0)}
-          onMouseUp={handlers.onMouseUp}
-          onMouseLeave={handlers.onMouseLeave}
-          onTouchStart={handlers.onTouchStart(MOVE_DELTA, 0)}
-          onTouchEnd={handlers.onTouchEnd}
-        >
-          →
-        </button>
-
-        <div />
-        <button
-          style={{
-            padding: 40,
-            fontSize: 32,
-            borderRadius: 12,
-            cursor: "pointer",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-            MozUserSelect: "none",
-            msUserSelect: "none",
-            touchAction: "manipulation",
-          }}
-          {...handlers.onMouseDown(0, MOVE_DELTA)}
-          onMouseUp={handlers.onMouseUp}
-          onMouseLeave={handlers.onMouseLeave}
-          onTouchStart={handlers.onTouchStart(0, MOVE_DELTA)}
-          onTouchEnd={handlers.onTouchEnd}
+          style={buttonStyle}
+          onTouchStart={() => startMoving("down")}
+          onTouchEnd={() => stopMoving("down")}
         >
           ↓
         </button>
-        <div />
+        <button
+          style={buttonStyle}
+          onTouchStart={() => startMoving("right")}
+          onTouchEnd={() => stopMoving("right")}
+        >
+          →
+        </button>
       </div>
     </div>
   );

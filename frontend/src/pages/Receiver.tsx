@@ -12,7 +12,6 @@ interface User {
 }
 
 const socket: Socket = io(import.meta.env.VITE_SERVER_URL);
-
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 const SQUARE_SIZE = 50;
@@ -22,12 +21,11 @@ export default function Receiver() {
   const [users, setUsers] = useState<User[]>([]);
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
-  // Add initial user on mount
   useEffect(() => {
     if (users.length === 0) {
       const firstUser: User = {
         id: uuidv4(),
-        color: "#007bff", // blue
+        color: "#00bcd4",
         x: CANVAS_WIDTH / 2 - SQUARE_SIZE / 2,
         y: CANVAS_HEIGHT / 2 - SQUARE_SIZE / 2,
       };
@@ -36,37 +34,25 @@ export default function Receiver() {
     }
   }, []);
 
-  // Listen for moves from server
   useEffect(() => {
-    socket.on(
-      "move",
-      ({ userId, dx, dy }: { userId: string; dx: number; dy: number }) => {
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user.id === userId
-              ? {
-                  ...user,
-                  x: Math.min(
-                    Math.max(user.x + dx, 0),
-                    CANVAS_WIDTH - SQUARE_SIZE
-                  ),
-                  y: Math.min(
-                    Math.max(user.y + dy, 0),
-                    CANVAS_HEIGHT - SQUARE_SIZE
-                  ),
-                }
-              : user
-          )
-        );
-      }
-    );
+    socket.on("move", ({ userId, dx, dy }) => {
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? {
+                ...u,
+                x: Math.min(Math.max(u.x + dx, 0), CANVAS_WIDTH - SQUARE_SIZE),
+                y: Math.min(Math.max(u.y + dy, 0), CANVAS_HEIGHT - SQUARE_SIZE),
+              }
+            : u
+        )
+      );
+    });
 
-    // Listen for new user join from server
     socket.on("join", (newUser: User) => {
-      setUsers((prev) => {
-        if (prev.find((u) => u.id === newUser.id)) return prev;
-        return [...prev, newUser];
-      });
+      setUsers((prev) =>
+        prev.find((u) => u.id === newUser.id) ? prev : [...prev, newUser]
+      );
     });
 
     return () => {
@@ -75,22 +61,18 @@ export default function Receiver() {
     };
   }, []);
 
-  // Draw users on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
     users.forEach(({ x, y, color }) => {
       ctx.fillStyle = color;
       ctx.fillRect(x, y, SQUARE_SIZE, SQUARE_SIZE);
     });
   }, [users]);
 
-  // Add new user button handler
   function addUser() {
     const newUser: User = {
       id: uuidv4(),
@@ -103,98 +85,57 @@ export default function Receiver() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        width: "100vw",
-        overflow: "hidden",
-      }}
-    >
-      {/* Canvas Container */}
+    <div style={{ display: "flex", height: "100vh", width: "100vw" }}>
       <div
         style={{
           flexGrow: sidebarVisible ? 0 : 1,
           width: sidebarVisible ? "70%" : "100%",
-          height: "100%",
-          backgroundColor: "#f0f0f0",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
         }}
       >
-        <canvas
-          ref={canvasRef}
-          width={CANVAS_WIDTH}
-          height={CANVAS_HEIGHT}
-          style={{
-            border: "1px solid black",
-            maxWidth: "100%",
-            height: "auto",
-          }}
-        />
+        <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
       </div>
 
-      {/* Sidebar */}
       {sidebarVisible && (
         <div
           style={{
             width: "30%",
-            height: "100%",
-            backgroundColor: "#fff",
-            boxShadow: "-2px 0 5px rgba(0,0,0,0.1)",
-            padding: 20,
-            boxSizing: "border-box",
+            padding: 16,
+            backgroundColor: "#1a1a1a",
+            borderLeft: "1px solid #333",
             overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
           }}
         >
-          <h1>Pokedek Receiver</h1>
+          <h1 style={{ fontSize: 12, marginBottom: 8 }}>Pokedek Receiver</h1>
 
           <button
             onClick={() => setSidebarVisible(false)}
-            style={{
-              marginBottom: 20,
-              padding: "10px 20px",
-              cursor: "pointer",
-              alignSelf: "flex-end",
-            }}
+            style={{ marginBottom: 12 }}
           >
             Hide Sidebar
           </button>
 
-          <button
-            onClick={addUser}
-            style={{
-              padding: "10px 20px",
-              marginBottom: 20,
-              cursor: "pointer",
-            }}
-          >
+          <button onClick={addUser} style={{ marginBottom: 12 }}>
             Add User
           </button>
 
           <div>
-            <h2>QR Codes</h2>
             {users.map((user) => (
               <div
                 key={user.id}
                 style={{
-                  marginBottom: 20,
-                  padding: 10,
-                  border: "1px solid #ddd",
-                  borderRadius: 8,
-                  backgroundColor: "#fafafa",
+                  backgroundColor: "#2a2a2a",
+                  padding: 8,
+                  borderRadius: 6,
+                  marginBottom: 12,
+                  border: "1px solid #444",
                 }}
               >
-                <p>User: {user.id.substring(0, 6)}</p>
+                <p>User: {user.id.slice(0, 6)}</p>
                 <QRCode
                   value={`${window.location.origin}/sender/${user.id}`}
-                  size={128}
+                  size={96}
                   bgColor="#fff"
                   fgColor="#000"
-                  includeMargin={true}
                 />
               </div>
             ))}
@@ -202,18 +143,14 @@ export default function Receiver() {
         </div>
       )}
 
-      {/* Show sidebar button when hidden */}
       {!sidebarVisible && (
         <button
           onClick={() => setSidebarVisible(true)}
           style={{
             position: "fixed",
-            top: 20,
-            right: 20,
-            padding: "10px 15px",
-            fontSize: 16,
-            cursor: "pointer",
-            zIndex: 1000,
+            top: 12,
+            right: 12,
+            zIndex: 100,
           }}
         >
           Show Sidebar
