@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ReceiverPage from "./pages/ReceiverPage";
-import SenderPage from "./pages/SenderPage";
+import ReceiverPage from "./pages/Receiver";
+import SenderPage from "./pages/Sender";
 
 export default function App() {
   return (
