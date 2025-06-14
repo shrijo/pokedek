@@ -85,7 +85,15 @@ export default function Receiver() {
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw" }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        width: "100vw",
+      }}
+    >
       <div
         style={{
           flexGrow: sidebarVisible ? 0 : 1,
