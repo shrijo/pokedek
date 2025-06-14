@@ -1,50 +1,100 @@
-# qr-sync-website
+# Pokedek Starter
 
-This project is a simple web application that allows real-time communication between a sender and a receiver using QR codes. The receiver page displays a QR code that can be scanned to access the sender page on a smartphone. The sender page includes a text field where users can input text, which will be displayed in real-time on the receiver page.
+This repo contains two folders:
 
-## Project Structure
+| Path | Description | Deployment target |
+|------|-------------|-------------------|
+| `frontend/` | React client (Vite) with Supabase & Socket.IO‑client | **Vercel** |
+| `server/`   | Node + Express + Socket.IO server | **Render** |
 
-```
-qr-sync-website
-├── src
-│   ├── index.html          # Main entry point of the website
-│   ├── receiver.html       # Receiver page displaying the QR code
-│   ├── sender.html         # Sender page with a text field
-│   ├── css
-│   │   └── styles.css      # Styles for the website
-│   ├── js
-│   │   ├── receiver.js     # Logic for the receiver page
-│   │   └── sender.js       # Logic for the sender page
-│   └── utils
-│       └── websocket.js    # WebSocket connection setup
-├── package.json            # npm configuration file
-└── README.md               # Project documentation
+---
+
+## 1 · Create the GitHub repo
+
+```bash
+git init
+git add .
+git commit -m "Initial Pokedek starter"
+gh repo create your‑username/pokedek --public --source=. --remote=origin
+git push -u origin main
 ```
 
-## Getting Started
+> Make sure you have the GitHub CLI installed (`brew install gh`) and are logged in.
 
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   ```
+---
 
-2. Navigate to the project directory:
-   ```
-   cd qr-sync-website
-   ```
+## 2 · Set up Supabase
 
-3. Install the dependencies:
-   ```
-   npm install
-   ```
+1. Sign in at <https://supabase.com> → **New project**.
+2. Note the **Project URL** and **Anon public key** (Settings → API).
+3. SQL editor → run:
 
-4. Open `src/index.html` in your web browser to access the application.
+```sql
+create table experiences (
+  id uuid default uuid_generate_v4() primary key,
+  name text,
+  description text
+);
 
-## Usage
+insert into experiences (name, description) values
+  ('Sample experience', 'Feel free to edit me!');
+```
 
-- Scan the QR code displayed on the receiver page to open the sender page on your smartphone.
-- Enter text in the sender page's text field to see it appear in real-time on the receiver page.
+4. In **Project settings → Database** click “_Enable Realtime_”.
 
-## License
+---
 
-This project is licensed under the MIT License.
+## 3 · Configure `.env` files locally
+
+```bash
+cp frontend/.env.example frontend/.env
+# edit VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY
+# set VITE_SERVER_URL to your Render service URL (we’ll create it next)
+```
+
+---
+
+## 4 · Deploy the Socket server on **Render**
+
+1. Go to <https://dashboard.render.com> → **New → Web Service**.
+2. Pick your repo, set root directory to `server/`.
+3. Environment:
+   - _Runtime_: **Node**
+   - _Build command_: `npm install`
+   - _Start command_: `npm start`
+4. Click **Create Web Service**.  
+   After first deploy finishes, note the service URL (e.g. `https://pokedek-socket.onrender.com`).
+
+---
+
+## 5 · Deploy the React app on **Vercel**
+
+1. Go to <https://vercel.com/new> → import the GitHub repo.
+2. **Root directory**: `frontend/`
+3. **Build command**: `npm run build` (detected automatically)
+4. **Output dir**: `dist`
+5. **Environment variables** → add the three from `frontend/.env`.
+6. Click **Deploy**.  
+   The generated URL is your production frontend.
+
+---
+
+## 6 · Local development
+
+```bash
+# terminal 1 – socket server
+cd server
+npm install
+node index.js   # default :4000
+
+# terminal 2 – React app
+cd frontend
+npm install
+npm run dev     # Vite dev server on :5173
+```
+
+---
+
+You’re ready! Open the React app → click an experience → scan the QR code to start controlling the square with your phone.
+
+Enjoy 🎉
