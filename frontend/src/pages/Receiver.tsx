@@ -11,7 +11,6 @@ interface User {
   color: string;
 }
 
-// Replace with your backend URL (make sure socket.io server is running)
 const socket: Socket = io(import.meta.env.VITE_SERVER_URL);
 
 export default function Receiver() {
@@ -19,26 +18,42 @@ export default function Receiver() {
 
   const colors = ["red", "green", "blue", "orange", "purple"];
 
-  // Add initial user on mount
+  // Create the first user initially on mount
   useEffect(() => {
     const firstUserId = uuidv4();
     setUsers([{ id: firstUserId, x: 50, y: 50, color: colors[0] }]);
   }, []);
 
-  // Listen for 'move' events from sockets and update user positions
+  // Listen to move commands with dx, dy deltas
   useEffect(() => {
-    socket.on("move", ({ userId, x, y }) => {
-      setUsers((prevUsers) =>
-        prevUsers.map((user) => (user.id === userId ? { ...user, x, y } : user))
-      );
-    });
+    socket.on(
+      "move",
+      ({ userId, dx, dy }: { userId: string; dx: number; dy: number }) => {
+        setUsers((prevUsers) => {
+          const userExists = prevUsers.some((user) => user.id === userId);
+          if (!userExists) {
+            console.warn(`Received move for unknown userId: ${userId}`);
+            return prevUsers; // Ignore unknown user moves
+          }
+
+          return prevUsers.map((user) =>
+            user.id === userId
+              ? {
+                  ...user,
+                  x: Math.min(Math.max(user.x + dx, 0), 360), // Clamp inside 400-40
+                  y: Math.min(Math.max(user.y + dy, 0), 360),
+                }
+              : user
+          );
+        });
+      }
+    );
 
     return () => {
       socket.off("move");
     };
   }, []);
 
-  // Add new user with different color and initial position
   function addUser() {
     setUsers((prevUsers) => {
       const newUserId = uuidv4();
@@ -58,7 +73,6 @@ export default function Receiver() {
     <div style={{ padding: 20, maxWidth: 600, margin: "auto" }}>
       <h1>Receiver</h1>
 
-      {/* Add User button */}
       <button
         onClick={addUser}
         style={{ marginBottom: 20, padding: "10px 20px" }}
@@ -66,7 +80,6 @@ export default function Receiver() {
         Add User
       </button>
 
-      {/* Canvas area */}
       <div
         style={{
           position: "relative",
@@ -75,10 +88,8 @@ export default function Receiver() {
           border: "2px solid black",
           marginBottom: 30,
           backgroundColor: "#f0f0f0",
-          touchAction: "none",
         }}
       >
-        {/* Squares representing users */}
         {users.map((user) => (
           <div
             key={user.id}
@@ -90,8 +101,8 @@ export default function Receiver() {
               left: user.x,
               top: user.y,
               borderRadius: 4,
-              transition: "left 0.1s ease, top 0.1s ease",
               boxShadow: "0 0 5px rgba(0,0,0,0.3)",
+              transition: "left 0.1s ease, top 0.1s ease",
             }}
           />
         ))}
